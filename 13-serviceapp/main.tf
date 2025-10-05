@@ -1,0 +1,50 @@
+variable "prefix" {
+    default = "day13"
+    type = string  
+}
+
+resource "azurerm_resource_group" "rg" {
+  name = "${var.prefix}-rg"
+  location = "UK South"
+}
+
+resource "azurerm_service_plan" "asp" {
+  name = "${var.prefix}-asp"
+  location = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+
+  sku_name = "S1"
+  os_type = "Linux"
+
+}
+
+resource "azurerm_linux_web_app" "as" {
+  name                = "${var.prefix}-webapp"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_service_plan.asp.location
+  service_plan_id     = azurerm_service_plan.asp.id
+
+  site_config {
+    application_stack {
+      dotnet_version = "8.0"
+      
+    }
+  }
+}
+
+resource "azurerm_linux_web_app_slot" "slot1" {
+  name                = "${var.prefix}slot1"
+  app_service_id = azurerm_linux_web_app.as.id
+   site_config {
+    application_stack {
+      dotnet_version = "8.0"
+      
+    }
+   }
+}
+
+resource "azurerm_app_service_source_control" "example" {
+  app_id   = azurerm_linux_web_app.as.id
+  repo_url = "https://github.com/olayinka789/tf-sample-bg"
+  branch   = "master"
+}
